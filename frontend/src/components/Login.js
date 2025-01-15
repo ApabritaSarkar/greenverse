@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import axios from 'axios';
-import { useNavigate, Link } from 'react-router-dom'; 
+import { useNavigate, Link } from 'react-router-dom';
 
 const Login = ({ setIsLoggedIn }) => {
     const [email, setEmail] = useState('');
@@ -10,13 +10,19 @@ const Login = ({ setIsLoggedIn }) => {
 
     const handleLogin = async (e) => {
         e.preventDefault();
-        
+
         try {
             const response = await axios.post('http://localhost:5000/api/login', { email, password });
 
             if (response.status === 200) {
                 setIsLoggedIn(true); // Update login state
-                navigate('/');  // Redirect to homepage or specified path
+                setError(null);
+
+                // Store the email in localStorage
+                localStorage.setItem('userEmail', email);
+                console.log('User email stored in localStorage:', email); // Debug log
+
+                navigate('/'); // Redirect to homepage or specified path
             }
         } catch (error) {
             setError(error.response?.data?.message || 'Login failed. Please try again.');
@@ -45,7 +51,7 @@ const Login = ({ setIsLoggedIn }) => {
             </form>
             {error && <p style={{ color: 'red' }}>{error}</p>}
             <p>
-                Don't have an account?{" "}
+                Don't have an account?{' '}
                 <Link to="/register" style={{ color: 'blue', textDecoration: 'underline' }}>
                     Register now
                 </Link>
