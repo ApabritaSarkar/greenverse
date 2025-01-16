@@ -1,6 +1,7 @@
 const express = require('express');
 const bcrypt = require('bcryptjs');
 const User = require('../models/User');
+const OwnedPlant = require('../models/OwnedPlant');
 const nodemailer = require('nodemailer');
 const router = express.Router();
 require('dotenv').config();
@@ -112,22 +113,52 @@ router.post('/login', async (req, res) => {
     }
 });
 
-// Get user details by email
+// Get user details and owned plants by email
 router.get('/profile', async (req, res) => {
     const { email } = req.query; // Expect email as a query parameter
-    console.log('Email received in query:', email); // Debug log
-    
+
     try {
+        // Fetch the user details
         const user = await User.findOne({ email });
         if (!user) {
             return res.status(404).json({ message: 'User not found' });
         }
-        res.json({ username: user.username, email: user.email });
+
+        // Fetch the owned plants associated with the user
+        const ownedPlants = await OwnedPlant.find({ userId: user._id });
+
+        // Combine user details and owned plants
+        res.json({
+            _id: user._id,
+            username: user.username,
+            email: user.email,
+            plants: ownedPlants, // Send plant data
+        });
     } catch (err) {
         res.status(500).json({ message: 'Server error' });
     }
 });
 
+// Add a new plant for the user
+router.post('/add-plant', async (req, res) => {
+    const { userId, name, datePlanted, status } = req.body;
+
+    try {
+        // Validate input
+        if (!userId || !name || !datePlanted || !status) {
+            return res.status(400).json({ message: 'All fields are required' });
+        }
+
+        // Create and save the new plant
+        const newPlant = new OwnedPlant({ userId, name, datePlanted, status });
+        await newPlant.save();
+
+        // Respond with success
+        res.status(201).json({ message: 'Plant added successfully', plant: newPlant });
+    } catch (err) {
+        res.status(500).json({ message: 'Server error' });
+    }
+});
 
 
 module.exports = router;
