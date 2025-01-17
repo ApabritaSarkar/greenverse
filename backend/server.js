@@ -3,7 +3,6 @@ const bodyParser = require('body-parser');
 const cors = require('cors');
 const connectDB = require('./config/db');
 const userRoutes = require('./routes/user');
-const ownedPlantRoutes = require('./routes/ownedPlant');
 
 require('dotenv').config();
 connectDB();

@@ -1,8 +1,9 @@
 // src/components/Forum.js
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import '../styles.css';
 
-const Forum = () => {
+const Forum = ({ isLoggedIn }) => {  
   // Mock data for forum posts
   const initialPosts = [
     {
@@ -51,6 +52,18 @@ const Forum = () => {
   const filteredPosts = posts.filter((post) =>
     post.title.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+
+  if (!isLoggedIn) {
+    return (
+        <div>
+            <h1>Login to join the forum</h1>
+            <p>
+                Please <Link to="/login">login</Link> to view and participate in the forum discussions.
+            </p>
+        </div>
+    );
+}
 
   return (
     <div>
