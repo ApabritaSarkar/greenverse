@@ -23,7 +23,7 @@ const App = () => {
             <Routes>
                 <Route path="/" element={<Dashboard />} />
                 <Route path="/plants" element={<Plants />} />
-                <Route path="/forum" element={<Forum isLoggedIn={isLoggedIn} />} />
+                <Route path="/forum" element={<Forum isLoggedIn={isLoggedIn} userEmail={localStorage.getItem('userEmail')}/>} />
                 <Route path="/profile" element={<Profile setIsLoggedIn={setIsLoggedIn} />} />
                 <Route path="/login" element={<Login setIsLoggedIn={setIsLoggedIn} />} />
                 <Route path="/register" element={<Register setIsLoggedIn={setIsLoggedIn}/>} />

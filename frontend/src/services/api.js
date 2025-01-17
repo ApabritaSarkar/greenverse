@@ -22,3 +22,4 @@ export async function addPlant(plantData) {
     }
     return data;
 }
+

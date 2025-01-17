@@ -15,13 +15,13 @@ const Login = ({ setIsLoggedIn }) => {
             const response = await axios.post('http://localhost:5000/api/login', { email, password });
 
             if (response.status === 200) {
+                const { username, email } = response.data;
                 setIsLoggedIn(true); // Update login state
                 setError(null);
 
                 // Store the email in localStorage
                 localStorage.setItem('userEmail', email);
-                console.log('User email stored in localStorage:', email); // Debug log
-
+                localStorage.setItem('username', username); // Store username locally
                 navigate('/'); // Redirect to homepage or specified path
             }
         } catch (error) {
