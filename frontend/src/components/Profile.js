@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { fetchUserProfile, addPlant } from '../services/api';
-import '../styles.css';
+import '../styles/profile.css';
 
 const Profile = ({ setIsLoggedIn }) => {
     const navigate = useNavigate();

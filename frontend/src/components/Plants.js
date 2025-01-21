@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import Modal from './Modal';
 import plantsData from '../data/plantsData';  // Import the dataset
-import '../styles.css';
+import '../styles/plants.css';
 
 const Plants = () => {
   const [selectedCategory, setSelectedCategory] = useState('all');
@@ -29,7 +29,7 @@ const Plants = () => {
 
   return (
     <div className="plants-page">
-      <h1>Our Plants Collection</h1>
+      <h2>Our Plants Collection</h2>
 
       <div className="search-bar">
         <input
@@ -66,10 +66,6 @@ const Plants = () => {
         )}
         <Modal isOpen={isOpen} onClose={closeModal} plant={selectedPlant} />
       </div>
-
-      <footer className="footer">
-        <p>&copy; 2024 Virtual Plant Companion. All rights reserved.</p>
-      </footer>
     </div>
   );
 };

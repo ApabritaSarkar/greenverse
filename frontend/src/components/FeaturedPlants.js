@@ -1,10 +1,9 @@
-// src/components/FeaturedPlants.js
 import React, { useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom'; // For navigation
 import { motion } from 'framer-motion';
 import Modal from './Modal';
 import plantsData from '../data/plantsData'; // Assuming plantsData is correctly imported
-import '../styles.css'; // Ensure this file contains necessary styles
+import '../styles/home.css'; // Ensure this file contains necessary styles
 
 const FeaturedPlants = () => {
   const sliderRef = useRef(null);

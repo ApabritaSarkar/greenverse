@@ -1,12 +1,17 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import '../styles.css';
+import '../styles/navbar.css';
 
 const Navbar = ({ isLoggedIn }) => {
     return (
         <div className="navbar">
             <nav>
-                <h1>Virtual Plant Companion</h1>
+            <div className="logo">
+                <Link to="/">
+                    <img src="/Greenverse.png" alt="GreenVerse Logo" className="navbar-logo" />
+                </Link>
+            
+                <h1>GREENVERSE</h1></div>
                 <ul>
                     <li><Link to="/">Home</Link></li>
                     <li><Link to="/plants">Plants</Link></li>

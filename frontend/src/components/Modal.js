@@ -1,5 +1,5 @@
-// src/components/Modal.js
 import React from 'react';
+import '../styles/modal.css';
 
 const Modal = ({ isOpen, onClose, plant }) => {
   if (!isOpen) return null;
@@ -8,12 +8,12 @@ const Modal = ({ isOpen, onClose, plant }) => {
     <div className="modal-overlay">
       <div className="modal-content">
         <span className="close" onClick={onClose}>&times;</span>
-        <h2>{plant.name}</h2>
-        <img src={plant.image} alt={plant.name} />
-        <p>{plant.description}</p>
-        <h3>Care Tips:</h3>
-        <p>{plant.careTips}</p>
-        {/* Add user reviews or comments here */}
+        <h2 className="modal-plant-name">{plant.name}</h2>
+        <img className="modal-plant-image" src={plant.image} alt={plant.name} />
+        <p className="modal-plant-description">{plant.description}</p>
+        <h3 className="modal-care-title">Care Tips:</h3>
+        <p className="modal-care-tips">{plant.careTips}</p>
+        {/* Add user reviews or comments section here */}
       </div>
     </div>
   );
