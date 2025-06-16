@@ -5,7 +5,6 @@ const User = require("../models/User");
 const OwnedPlant = require("../models/OwnedPlant");
 const nodemailer = require("nodemailer");
 const router = express.Router();
-// We'll update verifyToken to look in Authorization header
 const verifyToken = require("../middleware/verifyToken");
 require("dotenv").config();
 
@@ -89,10 +88,9 @@ router.post("/verify-otp", async (req, res) => {
       expiresIn: "7d",
     });
 
-    // Instead of setting httpOnly cookie, send token in response body
     res
       .status(200)
-      .json({ message: "OTP verified. User registered and logged in.", token: token }); // ✅ Send token here
+      .json({ message: "OTP verified. User registered and logged in.", token: token });
   } catch (error) {
     console.error("OTP verification error:", error);
     res.status(500).json({ message: "Server error" });
@@ -114,16 +112,14 @@ router.post("/login", async (req, res) => {
       return res.status(400).json({ message: "Invalid credentials" });
     }
 
-    // ✅ Generate JWT
+    // Generate JWT
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
       expiresIn: "1h",
     });
 
     console.log("ENV SECRET:", process.env.JWT_SECRET);
     console.log("User ID:", user._id);
-
-    // ✅ Instead of setting cookie, send token in response body
-    res.status(200).json({ message: "Login successful", token: token }); // ✅ Send token here
+    res.status(200).json({ message: "Login successful", token: token });
   } catch (error) {
     console.error("Login error:", error);
     res.status(500).json({ message: "Server error" });

@@ -1,4 +1,4 @@
-const API_BASE = 'http://localhost:5000/api';
+const API_BASE = 'https://greenverse-c6jx.onrender.com/api';
 
 // Helper to get token from localStorage
 const getToken = () => localStorage.getItem('token');
@@ -16,7 +16,7 @@ export async function loginUser(email, password) {
     if (!response.ok) {
         throw new Error(data.message || 'Login failed');
     }
-    // ✅ Store token received from backend in localStorage
+    // Store token received from backend in localStorage
     if (data.token) {
         localStorage.setItem('token', data.token);
     }
@@ -52,7 +52,6 @@ export async function verifyOtp(email, otp) {
     if (!response.ok) {
         throw new Error(data.message || 'OTP verification failed');
     }
-    // ✅ Store token received from backend in localStorage after OTP verification
     if (data.token) {
         localStorage.setItem('token', data.token);
     }
@@ -63,16 +62,14 @@ export async function verifyOtp(email, otp) {
 export async function fetchUserProfile() {
     const token = getToken();
     if (!token) {
-        // If no token, proactively throw an error that can be caught by the component
         throw new Error('No authentication token found. Please log in.');
     }
 
     const response = await fetch(`${API_BASE}/profile`, {
         method: 'GET',
         headers: {
-            'Authorization': `Bearer ${token}`, // ✅ Send token in Authorization header
+            'Authorization': `Bearer ${token}`,
         },
-        // No 'credentials: include' needed for Authorization header
     });
 
     const data = await response.json();
