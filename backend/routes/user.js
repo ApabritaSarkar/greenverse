@@ -1,164 +1,185 @@
-const express = require('express');
-const bcrypt = require('bcryptjs');
-const User = require('../models/User');
-const OwnedPlant = require('../models/OwnedPlant');
-const nodemailer = require('nodemailer');
+const express = require("express");
+const jwt = require("jsonwebtoken");
+const bcrypt = require("bcryptjs");
+const User = require("../models/User");
+const OwnedPlant = require("../models/OwnedPlant");
+const nodemailer = require("nodemailer");
 const router = express.Router();
-require('dotenv').config();
+// We'll update verifyToken to look in Authorization header
+const verifyToken = require("../middleware/verifyToken");
+require("dotenv").config();
 
 // Temporary in-memory user storage for OTP verification
 const tempUsers = {};
 
 // Nodemailer transporter configuration
 const transporter = nodemailer.createTransport({
-    service: 'gmail',
-    auth: {
-        user: process.env.EMAIL, // Your email
-        pass: process.env.PASSWORD // Your email app password
-    }
+  service: "gmail",
+  auth: {
+    user: process.env.EMAIL, // Your email
+    pass: process.env.PASSWORD, // Your email app password
+  },
 });
 
 // Utility function to generate a 6-digit OTP
-const generateOTP = () => Math.floor(100000 + Math.random() * 900000).toString();
+const generateOTP = () =>
+  Math.floor(100000 + Math.random() * 900000).toString();
 
 // Register route
-router.post('/register', async (req, res) => {
-    const { username, email, password } = req.body;
+router.post("/register", async (req, res) => {
+  const { username, email, password } = req.body;
 
-    try {
-        const existingUser = await User.findOne({ email });
-        if (existingUser) {
-            return res.status(400).json({ message: 'User already exists' });
-        }
-
-        const hashedPassword = await bcrypt.hash(password, 10);
-        const otp = generateOTP();
-
-        tempUsers[email] = {
-            username,
-            email,
-            password: hashedPassword,
-            otp,
-            otpExpires: Date.now() + 15 * 60 * 1000 // OTP valid for 15 minutes
-        };
-
-        await transporter.sendMail({
-            to: email,
-            subject: 'Verify Your Email',
-            text: `Your OTP is: ${otp}`
-        });
-
-        res.status(201).json({ message: 'Registration in progress... OTP sent!' });
-    } catch (error) {
-        console.error('Error during registration:', error);
-        res.status(500).json({ message: 'Registration failed. Please try again.' });
+  try {
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(400).json({ message: "User already exists" });
     }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const otp = generateOTP();
+
+    tempUsers[email] = {
+      username,
+      email,
+      password: hashedPassword,
+      otp,
+      otpExpires: Date.now() + 15 * 60 * 1000, // OTP valid for 15 minutes
+    };
+
+    await transporter.sendMail({
+      to: email,
+      subject: "Verify Your Email",
+      text: `Your OTP is: ${otp}`,
+    });
+
+    res.status(201).json({ message: "Registration in progress... OTP sent!" });
+  } catch (error) {
+    console.error("Error during registration:", error);
+    res.status(500).json({ message: "Registration failed. Please try again." });
+  }
 });
 
 // OTP verification route
-router.post('/verify-otp', async (req, res) => {
-    const { email, otp } = req.body;
+router.post("/verify-otp", async (req, res) => {
+  const { email, otp } = req.body;
 
-    try {
-        const tempUser = tempUsers[email];
+  try {
+    const tempUser = tempUsers[email];
 
-        if (!tempUser || tempUser.otpExpires < Date.now()) {
-            return res.status(400).json({ message: 'Invalid or expired OTP' });
-        }
-
-        if (tempUser.otp !== otp) {
-            return res.status(400).json({ message: 'Invalid OTP' });
-        }
-
-        const newUser = new User({
-            username: tempUser.username,
-            email: tempUser.email,
-            password: tempUser.password
-        });
-
-        await newUser.save();
-        delete tempUsers[email]; // Clear temporary data after successful registration
-
-        res.status(200).json({ message: 'OTP verified successfully. User registered.' });
-    } catch (error) {
-        console.error('OTP verification error:', error);
-        res.status(500).json({ message: 'Server error' });
+    if (!tempUser || tempUser.otpExpires < Date.now()) {
+      return res.status(400).json({ message: "Invalid or expired OTP" });
     }
+
+    if (tempUser.otp !== otp) {
+      return res.status(400).json({ message: "Invalid OTP" });
+    }
+
+    // Save new user to DB
+    const newUser = new User({
+      username: tempUser.username,
+      email: tempUser.email,
+      password: tempUser.password,
+    });
+
+    await newUser.save();
+    delete tempUsers[email]; // Clear OTP cache
+
+    // Sign JWT
+    const token = jwt.sign({ id: newUser._id }, process.env.JWT_SECRET, {
+      expiresIn: "7d",
+    });
+
+    // Instead of setting httpOnly cookie, send token in response body
+    res
+      .status(200)
+      .json({ message: "OTP verified. User registered and logged in.", token: token }); // ✅ Send token here
+  } catch (error) {
+    console.error("OTP verification error:", error);
+    res.status(500).json({ message: "Server error" });
+  }
 });
 
 // Login route
-router.post('/login', async (req, res) => {
-    const { email, password } = req.body;
+router.post("/login", async (req, res) => {
+  const { email, password } = req.body;
 
-    try {
-        const user = await User.findOne({ email });
-        if (!user) {
-            return res.status(400).json({ message: 'User not found' });
-        }
-
-        const isMatch = await bcrypt.compare(password, user.password);
-        if (!isMatch) {
-            return res.status(400).json({ message: 'Invalid credentials' });
-        }
-
-        res.status(200).json({
-            message: 'Login successful',
-            userId: user._id,
-            username: user.username,
-            email: user.email,
-        });
-    } catch (error) {
-        console.error('Login error:', error);
-        res.status(500).json({ message: 'Server error' });
+  try {
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(400).json({ message: "User not found" });
     }
+
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res.status(400).json({ message: "Invalid credentials" });
+    }
+
+    // ✅ Generate JWT
+    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
+      expiresIn: "1h",
+    });
+
+    console.log("ENV SECRET:", process.env.JWT_SECRET);
+    console.log("User ID:", user._id);
+
+    // ✅ Instead of setting cookie, send token in response body
+    res.status(200).json({ message: "Login successful", token: token }); // ✅ Send token here
+  } catch (error) {
+    console.error("Login error:", error);
+    res.status(500).json({ message: "Server error" });
+  }
 });
 
-// Get user details and owned plants by email
-router.get('/profile', async (req, res) => {
-    const { email } = req.query; // Expect email as a query parameter
+// Profile route
+router.get("/profile", verifyToken, async (req, res) => {
+  try {
+    console.log("Fetching profile for userId:", req.userId);
 
-    try {
-        // Fetch the user details
-        const user = await User.findOne({ email });
-        if (!user) {
-            return res.status(404).json({ message: 'User not found' });
-        }
-
-        // Fetch the owned plants associated with the user
-        const ownedPlants = await OwnedPlant.find({ userId: user._id });
-
-        // Combine user details and owned plants
-        res.json({
-            _id: user._id,
-            username: user.username,
-            email: user.email,
-            plants: ownedPlants, // Send plant data
-        });
-    } catch (err) {
-        res.status(500).json({ message: 'Server error' });
+    const user = await User.findById(req.userId).populate("plants");
+    if (!user) {
+      console.log("User not found for ID:", req.userId);
+      return res.status(404).json({ message: "User not found" });
     }
+
+    res.status(200).json({
+      username: user.username,
+      email: user.email,
+      plants: user.plants || [],
+      _id: user._id,
+    });
+  } catch (err) {
+    console.error("Profile fetch error in route:", err);
+    res.status(500).json({ message: "Server error" });
+  }
 });
 
-// Add a new plant for the user
-router.post('/add-plant', async (req, res) => {
-    const { userId, name, datePlanted, status } = req.body;
+// Add plant route
+router.post("/add-plant", verifyToken, async (req, res) => {
+  try {
+    const { name, datePlanted, status } = req.body;
 
-    try {
-        // Validate input
-        if (!userId || !name || !datePlanted || !status) {
-            return res.status(400).json({ message: 'All fields are required' });
-        }
+    const user = await User.findById(req.userId);
+    if (!user) return res.status(404).json({ message: "User not found" });
 
-        // Create and save the new plant
-        const newPlant = new OwnedPlant({ userId, name, datePlanted, status });
-        await newPlant.save();
+    const newPlant = new OwnedPlant({
+      name,
+      datePlanted,
+      status,
+      owner: user._id,
+    });
 
-        // Respond with success
-        res.status(201).json({ message: 'Plant added successfully', plant: newPlant });
-    } catch (err) {
-        res.status(500).json({ message: 'Server error' });
-    }
+    await newPlant.save();
+
+    user.plants.push(newPlant._id);
+    await user.save();
+
+    res
+      .status(201)
+      .json({ message: "Plant added successfully", plant: newPlant });
+  } catch (err) {
+    console.error("Add plant error:", err);
+    res.status(500).json({ message: "Server error", error: err.message });
+  }
 });
-
 
 module.exports = router;

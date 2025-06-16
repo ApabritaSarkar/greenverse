@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import axios from 'axios';
+// Removed axios, using native fetch
+// import axios from 'axios';
 import { useNavigate, Link } from 'react-router-dom';
 import '../styles/auth.css';
 
@@ -9,21 +10,39 @@ const Login = ({ setIsLoggedIn }) => {
     const [error, setError] = useState('');
     const navigate = useNavigate();
 
+    // Base URL for API requests
+    const API_BASE = 'http://localhost:5000/api';
+
     const handleLogin = async (e) => {
         e.preventDefault();
-        try {
-            const response = await axios.post('http://localhost:5000/api/login', { email, password });
-            if (response.status === 200) {
-                const { username, email } = response.data;
-                setIsLoggedIn(true);
-                setError(null);
+        setError(''); // Clear previous errors
 
-                localStorage.setItem('userEmail', email);
-                localStorage.setItem('username', username);
-                navigate('/');
+        try {
+            const response = await fetch(`${API_BASE}/login`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ email, password }),
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.message || 'Login failed. Please try again.');
             }
-        } catch (error) {
-            setError(error.response?.data?.message || 'Login failed. Please try again.');
+
+            // ✅ Store the token from the response in localStorage
+            if (data.token) {
+                localStorage.setItem('token', data.token);
+            }
+
+            setIsLoggedIn(true); // Update global login state
+            setError(null); // Clear any login specific errors
+            navigate('/profile'); // Redirect to profile or dashboard upon successful login
+        } catch (err) {
+            console.error('Login error:', err.message);
+            setError(err.message || 'Login failed. Please try again.');
         }
     };
 

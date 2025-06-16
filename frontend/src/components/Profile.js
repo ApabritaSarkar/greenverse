@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { fetchUserProfile, addPlant } from '../services/api';
+import { fetchUserProfile, addPlant, logout } from '../services/api'; // Import logout
 import '../styles/profile.css';
 
 const Profile = ({ setIsLoggedIn }) => {
@@ -12,32 +12,44 @@ const Profile = ({ setIsLoggedIn }) => {
     const [status, setStatus] = useState('');
 
     useEffect(() => {
-        const email = localStorage.getItem('userEmail');
-        if (email) {
-            fetchUserProfile(email)
-                .then(data => setUser(data))
-                .catch(err => setError(err.message));
-        } else {
-            setError('No user logged in');
-        }
-    }, []);
+        // Now fetchUserProfile will use the Authorization header automatically
+        fetchUserProfile()
+            .then(data => setUser(data))
+            .catch(err => {
+                console.error("Error fetching profile:", err);
+                setError('You must be logged in to view profile. ' + err.message);
+                // If token is invalid or expired, clear it and redirect
+                localStorage.removeItem('token');
+                setIsLoggedIn(false);
+                navigate('/login');
+            });
+    }, [navigate, setIsLoggedIn]); // Add navigate and setIsLoggedIn to dependency array
 
-    const handleLogout = () => {
-        setIsLoggedIn(false);
-        localStorage.clear();
-        navigate('/');
+    const handleLogout = async () => {
+        try {
+            logout(); // Call the logout function from api.js
+            setIsLoggedIn(false);
+            navigate('/');
+        } catch (err) {
+            // This catch block might not be necessary if logout just clears localStorage
+            console.error('Logout failed:', err);
+            // Replace alert with a modal or better UI notification
+            // alert('Logout failed. Try again.');
+        }
     };
 
     const handleAddPlant = (e) => {
         e.preventDefault();
 
         if (!plantName || !datePlanted || !status) {
-            alert('Please fill out all fields.');
+            // Replace alert with a modal or better UI notification
+            // alert('Please fill out all fields.');
+            console.warn('Please fill out all fields for the plant.');
             return;
         }
 
         const newPlant = {
-            userId: user._id, // Assuming user._id is available
+            // userId is no longer needed here, backend will get it from the token
             name: plantName,
             datePlanted,
             status,
@@ -45,37 +57,35 @@ const Profile = ({ setIsLoggedIn }) => {
 
         addPlant(newPlant)
             .then(data => {
-                alert('Plant added successfully!');
-                setUser((prev) => ({
+                // Replace alert with a modal or better UI notification
+                // alert('Plant added successfully!');
+                console.log('Plant added successfully!', data.plant);
+                setUser(prev => ({
                     ...prev,
-                    plants: [...prev.plants, data.plant], // Update the local state with the new plant
+                    plants: [...(prev.plants || []), data.plant], // Ensure plants is an array
                 }));
                 setPlantName('');
                 setDatePlanted('');
                 setStatus('');
             })
-            .catch(err => alert(err.message));
+            .catch(err => {
+                console.error("Error adding plant:", err);
+                // Replace alert with a modal or better UI notification
+                // alert(err.message);
+                setError('Failed to add plant: ' + err.message);
+            });
     };
 
-    if (error) {
-        return <div>Error: {error}</div>;
-    }
-
-    if (!user) {
-        return <div>Loading...</div>;
-    }
+    if (error) return <div className="error-message">{error}</div>;
+    if (!user) return <div className="loading-message">Loading user profile...</div>;
 
     return (
-        <div>
+        <div className="profile-container">
             <h1>Profile</h1>
 
             <div className="profile-details">
-                <p>
-                    <strong>Name:</strong> {user.username}
-                </p>
-                <p>
-                    <strong>Email:</strong> {user.email}
-                </p>
+                <p><strong>Name:</strong> {user.username}</p>
+                <p><strong>Email:</strong> {user.email}</p>
             </div>
 
             <div className="owned-plants">
@@ -94,38 +104,23 @@ const Profile = ({ setIsLoggedIn }) => {
             </div>
 
             <div className="add-plant-section">
-    <h2>Add a New Plant</h2>
-    <form onSubmit={handleAddPlant} className="add-plant-form">
-        <div className="form-group">
-            <label>Plant Name:</label>
-            <input
-                type="text"
-                placeholder="Enter plant name"
-                value={plantName}
-                onChange={(e) => setPlantName(e.target.value)}
-            />
-        </div>
-        <div className="form-group">
-            <label>Date Planted:</label>
-            <input
-                type="date"
-                value={datePlanted}
-                onChange={(e) => setDatePlanted(e.target.value)}
-            />
-        </div>
-        <div className="form-group">
-            <label>Status:</label>
-            <input
-                type="text"
-                placeholder="e.g., Healthy"
-                value={status}
-                onChange={(e) => setStatus(e.target.value)}
-            />
-        </div>
-        <button type="submit" className="add-plant-button">Add Plant</button>
-    </form>
-</div>
-
+                <h2>Add a New Plant</h2>
+                <form onSubmit={handleAddPlant} className="add-plant-form">
+                    <div className="form-group">
+                        <label>Plant Name:</label>
+                        <input type="text" value={plantName} onChange={(e) => setPlantName(e.target.value)} />
+                    </div>
+                    <div className="form-group">
+                        <label>Date Planted:</label>
+                        <input type="date" value={datePlanted} onChange={(e) => setDatePlanted(e.target.value)} />
+                    </div>
+                    <div className="form-group">
+                        <label>Status:</label>
+                        <input type="text" value={status} onChange={(e) => setStatus(e.target.value)} />
+                    </div>
+                    <button type="submit" className="add-plant-button">Add Plant</button>
+                </form>
+            </div>
 
             <div className="logout-button">
                 <button onClick={handleLogout}>Logout</button>
