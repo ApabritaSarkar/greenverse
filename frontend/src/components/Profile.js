@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { fetchUserProfile, addPlant, logout } from '../services/api'; // Import logout
+import { fetchUserProfile, addPlant, logout } from '../services/profileApi';
 import '../styles/profile.css';
 
 const Profile = ({ setIsLoggedIn }) => {
@@ -27,14 +27,11 @@ const Profile = ({ setIsLoggedIn }) => {
 
     const handleLogout = async () => {
         try {
-            logout(); // Call the logout function from api.js
+            logout();
             setIsLoggedIn(false);
             navigate('/');
         } catch (err) {
-            // This catch block might not be necessary if logout just clears localStorage
             console.error('Logout failed:', err);
-            // Replace alert with a modal or better UI notification
-            // alert('Logout failed. Try again.');
         }
     };
 
@@ -42,8 +39,6 @@ const Profile = ({ setIsLoggedIn }) => {
         e.preventDefault();
 
         if (!plantName || !datePlanted || !status) {
-            // Replace alert with a modal or better UI notification
-            // alert('Please fill out all fields.');
             console.warn('Please fill out all fields for the plant.');
             return;
         }
@@ -57,8 +52,6 @@ const Profile = ({ setIsLoggedIn }) => {
 
         addPlant(newPlant)
             .then(data => {
-                // Replace alert with a modal or better UI notification
-                // alert('Plant added successfully!');
                 console.log('Plant added successfully!', data.plant);
                 setUser(prev => ({
                     ...prev,
@@ -70,8 +63,6 @@ const Profile = ({ setIsLoggedIn }) => {
             })
             .catch(err => {
                 console.error("Error adding plant:", err);
-                // Replace alert with a modal or better UI notification
-                // alert(err.message);
                 setError('Failed to add plant: ' + err.message);
             });
     };
