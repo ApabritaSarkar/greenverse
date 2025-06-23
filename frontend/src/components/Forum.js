@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { fetchForumPosts, addForumPost } from '../services/forumApi'; // Your existing forum API functions
-import { MessageSquareText, Search, UserCircle, MessageCircle, Send } from 'lucide-react'; // Icons for better UX
+import { MessageSquareText, Search, UserCircle, MessageCircle, Send, LogIn, UserPlus } from 'lucide-react'; // Added LogIn and UserPlus icons
 
 const Forum = ({ isLoggedIn }) => {
     const [posts, setPosts] = useState([]);
@@ -90,13 +90,30 @@ const Forum = ({ isLoggedIn }) => {
     if (!isLoggedIn) {
         return (
             <div className="min-h-screen flex flex-col items-center justify-center text-center p-8 bg-eco-offwhite font-roboto pt-20">
-                <MessageSquareText size={64} className="text-eco-green mb-6" />
-                <h2 className="text-3xl font-bold text-eco-dark mb-4 font-inter">Join the GreenVerse Discussion!</h2>
-                <p className="text-gray-700 text-lg mb-6">
-                    Please <Link to="/login" className="text-eco-green font-semibold hover:underline">login</Link> or{' '}
-                    <Link to="/register" className="text-eco-blue font-semibold hover:underline">register</Link> to view and participate in discussions.
+                <MessageSquareText size={80} className="text-eco-green mb-6 animate-bounce-slow" /> {/* Larger, animated icon */}
+                <h2 className="text-4xl md:text-5xl font-bold text-eco-dark mb-4 font-inter leading-tight">
+                    Join the GreenVerse Community Forum
+                </h2>
+                <p className="text-gray-700 text-lg max-w-lg mx-auto mb-8 leading-relaxed">
+                    Connect with fellow plant enthusiasts, share your growing tips, ask questions, and dive into vibrant discussions about all things green.
                 </p>
-                {error && <p className="bg-red-100 text-red-700 text-sm text-center py-2 rounded-md mb-4 font-medium max-w-sm mx-auto">{error}</p>}
+                <div className="flex flex-col sm:flex-row gap-4 mb-8">
+                    <Link
+                        to="/login"
+                        className="bg-gradient-to-r from-eco-green to-eco-blue text-white px-8 py-3 rounded-lg font-semibold text-lg shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300 flex items-center justify-center space-x-2 w-full sm:w-auto"
+                    >
+                        <LogIn size={20} />
+                        <span>Login to Participate</span>
+                    </Link>
+                    <Link
+                        to="/register"
+                        className="bg-transparent border-2 border-eco-green text-eco-green px-8 py-3 rounded-lg font-semibold text-lg shadow-md hover:bg-eco-green hover:text-white transition-all duration-300 flex items-center justify-center space-x-2 w-full sm:w-auto"
+                    >
+                        <UserPlus size={20} />
+                        <span>Create Account</span>
+                    </Link>
+                </div>
+                {error && <p className="bg-red-100 text-red-700 text-sm text-center py-2 rounded-md font-medium max-w-sm mx-auto">{error}</p>}
             </div>
         );
     }

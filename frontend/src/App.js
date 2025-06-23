@@ -68,16 +68,7 @@ const App = () => {
       <Routes>
         <Route path="/" element={<Dashboard />} />
         <Route path="/plants" element={<Plants />} />
-        <Route
-          path="/forum"
-          element={
-            isLoggedIn ? (
-              <Forum isLoggedIn={isLoggedIn} />
-            ) : (
-              <Navigate to="/login" />
-            )
-          }
-        />
+        <Route path="/forum" element={<Forum />} />
         <Route
           path="/profile"
           element={
