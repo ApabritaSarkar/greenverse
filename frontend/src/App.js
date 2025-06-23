@@ -10,8 +10,8 @@ import Login from "./components/Login";
 import Navbar from "./components/Navbar";
 import Dashboard from "./components/Dashboard";
 import Plants from "./components/Plants";
-import Profile from "./components/Profile";
-import Forum from "./components/Forum";
+import Profile from './components/profile/Profile';
+import Forum from "./components/forum/Forum";
 import { logout, fetchUserProfile } from "./services/profileApi";
 
 const App = () => {
@@ -68,7 +68,7 @@ const App = () => {
       <Routes>
         <Route path="/" element={<Dashboard />} />
         <Route path="/plants" element={<Plants />} />
-        <Route path="/forum" element={<Forum />} />
+<Route path="/forum" element={<Forum isLoggedIn={isLoggedIn} />} />
         <Route
           path="/profile"
           element={

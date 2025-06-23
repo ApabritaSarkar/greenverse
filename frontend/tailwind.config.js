@@ -1,16 +1,6 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
-  content: [
-    "./src/components/Dashboard.js",
-    "./src/components/FeaturedPlants.js",
-    "./src/components/Forum.js",
-    "./src/components/Login.js",
-    "./src/components/Modal.js",
-    "./src/components/Navbar.js",
-    "./src/components/Plants.js",
-    "./src/components/Profile.js",
-    "./src/components/Register.js",
-  ],
+  content: ["./src/**/*.{js,jsx,ts,tsx}"],
   theme: {
     extend: {
       fontFamily: {
@@ -30,9 +20,24 @@ module.exports = {
           "0%": { opacity: 0, transform: "translateY(20px)" },
           "100%": { opacity: 1, transform: "translateY(0)" },
         },
+        fadeInDown: {
+          "0%": { opacity: 0, transform: "translateY(-10px)" },
+          "100%": { opacity: 1, transform: "translateY(0)" },
+        },
+        fadeIn: {
+          "0%": { opacity: 0 },
+          "100%": { opacity: 1 },
+        },
+        scaleIn: {
+          "0%": { opacity: 0, transform: "scale(0.95)" },
+          "100%": { opacity: 1, transform: "scale(1)" },
+        },
       },
       animation: {
-        "fade-in-up": "fadeInUp 0.5s ease-out forwards",
+        fadeInUp: "fadeInUp 0.5s ease-out forwards",
+        fadeInDown: "fadeInDown 0.3s ease-out",
+        fadeIn: "fadeIn 0.3s ease-out",
+        scaleIn: "scaleIn 0.3s ease-out",
       },
     },
   },
