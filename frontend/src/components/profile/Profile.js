@@ -5,7 +5,7 @@ import UserInfo from "./UserInfo";
 import OwnedPlants from "./OwnedPlants";
 import AddPlantForm from "./AddPlantForm";
 import LogoutButton from "./LogoutButton";
-import HealthDashboard from '../plantHealth/HealthDashboard';
+import HealthDashboard from "../plantHealth/HealthDashboard";
 
 const Profile = ({ setIsLoggedIn }) => {
   const navigate = useNavigate();
@@ -83,9 +83,17 @@ const Profile = ({ setIsLoggedIn }) => {
       status,
       species: plantSpecies,
       location: plantLocation,
-      wateringFrequency: wateringFreq,
-      fertilizingFrequency: fertilizingFreq,
-      pruningFrequency: pruningFreq,
+      careSchedule: {
+        watering: {
+          frequency: wateringFreq || 7,
+        },
+        fertilizing: {
+          frequency: fertilizingFreq || 30,
+        },
+        pruning: {
+          frequency: pruningFreq || 90,
+        },
+      },
     };
 
     try {
