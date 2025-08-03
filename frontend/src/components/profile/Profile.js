@@ -1,46 +1,57 @@
-import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { fetchUserProfile, addPlant, logout } from '../../services/profileApi';
-import UserInfo from './UserInfo';
-import OwnedPlants from './OwnedPlants';
-import AddPlantForm from './AddPlantForm';
-import LogoutButton from './LogoutButton';
+import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { fetchUserProfile, addPlant, logout } from "../../services/profileApi";
+import UserInfo from "./UserInfo";
+import OwnedPlants from "./OwnedPlants";
+import AddPlantForm from "./AddPlantForm";
+import LogoutButton from "./LogoutButton";
+import HealthDashboard from '../plantHealth/HealthDashboard';
 
 const Profile = ({ setIsLoggedIn }) => {
   const navigate = useNavigate();
 
   const [user, setUser] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState('');
-  const [message, setMessage] = useState('');
+  const [error, setError] = useState("");
+  const [message, setMessage] = useState("");
+  const [activeTab, setActiveTab] = useState("plants"); // Tab state
 
-  const [plantName, setPlantName] = useState('');
-  const [datePlanted, setDatePlanted] = useState('');
-  const [status, setStatus] = useState('');
+  const [plantName, setPlantName] = useState("");
+  const [datePlanted, setDatePlanted] = useState("");
+  const [status, setStatus] = useState("");
   const [isAddingPlant, setIsAddingPlant] = useState(false);
+
+  // Additional plant fields
+  const [plantSpecies, setPlantSpecies] = useState("");
+  const [plantLocation, setPlantLocation] = useState("");
+  const [wateringFreq, setWateringFreq] = useState("");
+  const [fertilizingFreq, setFertilizingFreq] = useState("");
+  const [pruningFreq, setPruningFreq] = useState("");
 
   useEffect(() => {
     const getUserProfile = async () => {
       setIsLoading(true);
-      setError('');
+      setError("");
 
       try {
         const data = await fetchUserProfile();
         const normalizedUser = {
           ...data,
           plants: data.plants || [],
-          profilePicture: data.profilePicture || 'https://placehold.co/150x150/9AE6B4/2D3748?text=User',
-          bio: data.bio || 'No bio provided.',
-          memberSince: data.memberSince || 'N/A',
-          plantsOwned: data.plants?.length || 0
+          profilePicture:
+            data.profilePicture ||
+            "https://placehold.co/150x150/9AE6B4/2D3748?text=User",
+          bio: data.bio || "No bio provided.",
+          memberSince: data.memberSince || "N/A",
+          plantsOwned: data.plants?.length || 0,
         };
         setUser(normalizedUser);
       } catch (err) {
-        console.error('Error fetching profile:', err);
-        setError(err.message || 'Failed to load profile.');
-        localStorage.removeItem('token');
+        console.error("Error fetching profile:", err);
+        setError(err.message || "Failed to load profile.");
+        localStorage.removeItem("token");
         setIsLoggedIn(false);
-        navigate('/login');
+        navigate("/login");
       } finally {
         setIsLoading(false);
       }
@@ -52,35 +63,51 @@ const Profile = ({ setIsLoggedIn }) => {
   const handleLogout = () => {
     logout();
     setIsLoggedIn(false);
-    navigate('/');
+    navigate("/");
   };
 
   const handleAddPlant = async (e) => {
     e.preventDefault();
-    setMessage('');
-    setError('');
+    setMessage("");
+    setError("");
 
     if (!plantName || !datePlanted || !status) {
-      setError('Please fill in all plant details.');
+      setError("Please fill in all plant details.");
       return;
     }
 
     setIsAddingPlant(true);
-    const newPlant = { name: plantName, datePlanted, status };
+    const newPlant = {
+      name: plantName,
+      datePlanted,
+      status,
+      species: plantSpecies,
+      location: plantLocation,
+      wateringFrequency: wateringFreq,
+      fertilizingFrequency: fertilizingFreq,
+      pruningFrequency: pruningFreq,
+    };
 
     try {
       const data = await addPlant(newPlant);
       setUser((prev) => ({
         ...prev,
-        plants: [...(prev.plants || []), { ...data, _id: data._id || `temp_${Date.now()}` }],
-        plantsOwned: (prev.plantsOwned || 0) + 1
+        plants: [
+          ...(prev.plants || []),
+          { ...data, _id: data._id || `temp_${Date.now()}` },
+        ],
+        plantsOwned: (prev.plantsOwned || 0) + 1,
       }));
-      setPlantName('');
-      setDatePlanted('');
-      setStatus('');
-      setMessage('Plant added successfully!');
+      setPlantName("");
+      setDatePlanted("");
+      setStatus("");
+      setPlantSpecies("");
+      setPlantLocation("");
+      setWateringFreq("");
+      setFertilizingFreq("");
+      setMessage("Plant added successfully!");
     } catch (err) {
-      setError('Failed to add plant: ' + err.message);
+      setError("Failed to add plant: " + err.message);
     } finally {
       setIsAddingPlant(false);
     }
@@ -89,7 +116,9 @@ const Profile = ({ setIsLoggedIn }) => {
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-eco-offwhite pt-20">
-        <div className="text-eco-green text-xl font-semibold">Loading user profile...</div>
+        <div className="text-eco-green text-xl font-semibold">
+          Loading user profile...
+        </div>
       </div>
     );
   }
@@ -104,33 +133,100 @@ const Profile = ({ setIsLoggedIn }) => {
 
   return (
     <div className="min-h-screen bg-eco-offwhite p-4 pt-20 font-roboto">
-      <div className="max-w-4xl mx-auto bg-white rounded-lg shadow-xl p-8 border border-gray-200">
+      <div className="max-w-4xl mx-auto bg-white rounded-lg shadow-xl border border-gray-200">
+        {/* Tab Navigation */}
+        <div className="border-b border-gray-200">
+          <nav className="flex space-x-8 px-6">
+            <button
+              onClick={() => setActiveTab("overview")}
+              className={`py-4 px-2 border-b-2 font-medium text-sm ${
+                activeTab === "overview"
+                  ? "border-eco-green text-eco-green"
+                  : "border-transparent text-gray-500"
+              }`}
+            >
+              Health Overview
+            </button>
 
-        {/* General Messages */}
-        {message && (
-          <p className="bg-eco-lightgreen bg-opacity-20 text-eco-green text-sm text-center py-2 rounded-md mb-4 font-medium">
-            {message}
-          </p>
-        )}
-        {error && !message && (
-          <p className="bg-red-100 text-red-700 text-sm text-center py-2 rounded-md mb-4 font-medium">
-            {error}
-          </p>
-        )}
+            <button
+              onClick={() => setActiveTab("plants")}
+              className={`py-4 px-2 border-b-2 font-medium text-sm ${
+                activeTab === "plants"
+                  ? "border-eco-green text-eco-green"
+                  : "border-transparent text-gray-500"
+              }`}
+            >
+              My Plants
+            </button>
 
-        <UserInfo user={user} />
-        <OwnedPlants plants={user.plants} />
-        <AddPlantForm
-          plantName={plantName}
-          datePlanted={datePlanted}
-          status={status}
-          isAddingPlant={isAddingPlant}
-          setPlantName={setPlantName}
-          setDatePlanted={setDatePlanted}
-          setStatus={setStatus}
-          handleAddPlant={handleAddPlant}
-        />
-        <LogoutButton handleLogout={handleLogout} />
+            <button
+              onClick={() => setActiveTab("add-plant")}
+              className={`py-4 px-2 border-b-2 font-medium text-sm ${
+                activeTab === "add-plant"
+                  ? "border-eco-green text-eco-green"
+                  : "border-transparent text-gray-500"
+              }`}
+            >
+              Add Plant
+            </button>
+
+            <button
+              onClick={() => setActiveTab("profile")}
+              className={`py-4 px-2 border-b-2 font-medium text-sm ${
+                activeTab === "profile"
+                  ? "border-eco-green text-eco-green"
+                  : "border-transparent text-gray-500"
+              }`}
+            >
+              Profile Info
+            </button>
+          </nav>
+        </div>
+
+        {/* Tab Content */}
+        <div className="p-6">
+          {activeTab === "overview" && <HealthDashboard />}
+
+          {activeTab === "plants" && (
+            <div>
+              <OwnedPlants plants={user.plants} />
+            </div>
+          )}
+
+          {activeTab === "add-plant" && (
+            <div>
+              <AddPlantForm
+                plantName={plantName}
+                setPlantName={setPlantName}
+                datePlanted={datePlanted}
+                setDatePlanted={setDatePlanted}
+                status={status}
+                setStatus={setStatus}
+                handleAddPlant={handleAddPlant}
+                isAddingPlant={isAddingPlant}
+                message={message}
+                error={error}
+                plantSpecies={plantSpecies}
+                setPlantSpecies={setPlantSpecies}
+                plantLocation={plantLocation}
+                setPlantLocation={setPlantLocation}
+                wateringFreq={wateringFreq}
+                setWateringFreq={setWateringFreq}
+                fertilizingFreq={fertilizingFreq}
+                setFertilizingFreq={setFertilizingFreq}
+                pruningFreq={pruningFreq}
+                setPruningFreq={setPruningFreq}
+              />
+            </div>
+          )}
+
+          {activeTab === "profile" && (
+            <div>
+              <UserInfo user={user} />
+              <LogoutButton handleLogout={handleLogout} />
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
