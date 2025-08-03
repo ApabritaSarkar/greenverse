@@ -82,29 +82,42 @@ const ownedPlantSchema = new mongoose.Schema({
 // Calculate next due dates before saving
 ownedPlantSchema.pre('save', function(next) {
   const now = new Date();
-  
-  if (this.careSchedule.watering.frequency && this.careSchedule.watering.lastDone) {
+
+  // WATERS
+  if (!this.careSchedule.watering.lastDone) {
+    this.careSchedule.watering.lastDone = now;
+  }
+  if (this.careSchedule.watering.frequency) {
     this.careSchedule.watering.nextDue = new Date(
-      this.careSchedule.watering.lastDone.getTime() + 
-      (this.careSchedule.watering.frequency * 24 * 60 * 60 * 1000)
+      this.careSchedule.watering.lastDone.getTime() +
+      this.careSchedule.watering.frequency * 24 * 60 * 60 * 1000
     );
   }
-  
-  if (this.careSchedule.fertilizing.frequency && this.careSchedule.fertilizing.lastDone) {
+
+  // FERTILIZE
+  if (!this.careSchedule.fertilizing.lastDone) {
+    this.careSchedule.fertilizing.lastDone = now;
+  }
+  if (this.careSchedule.fertilizing.frequency) {
     this.careSchedule.fertilizing.nextDue = new Date(
-      this.careSchedule.fertilizing.lastDone.getTime() + 
-      (this.careSchedule.fertilizing.frequency * 24 * 60 * 60 * 1000)
+      this.careSchedule.fertilizing.lastDone.getTime() +
+      this.careSchedule.fertilizing.frequency * 24 * 60 * 60 * 1000
     );
   }
-  
-  if (this.careSchedule.pruning.frequency && this.careSchedule.pruning.lastDone) {
+
+  // PRUNE
+  if (!this.careSchedule.pruning.lastDone) {
+    this.careSchedule.pruning.lastDone = now;
+  }
+  if (this.careSchedule.pruning.frequency) {
     this.careSchedule.pruning.nextDue = new Date(
-      this.careSchedule.pruning.lastDone.getTime() + 
-      (this.careSchedule.pruning.frequency * 24 * 60 * 60 * 1000)
+      this.careSchedule.pruning.lastDone.getTime() +
+      this.careSchedule.pruning.frequency * 24 * 60 * 60 * 1000
     );
   }
-  
+
   next();
 });
+
 
 module.exports = mongoose.model("OwnedPlant", ownedPlantSchema);
