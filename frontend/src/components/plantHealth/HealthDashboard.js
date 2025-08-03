@@ -177,9 +177,13 @@ const HealthDashboard = () => {
                     <p className="text-sm">
                       {new Date(reminder.dueDate).toLocaleDateString()}
                     </p>
-                    {reminder.overdue && (
+                    {reminder.overdue ? (
                       <span className="text-xs bg-red-500 text-white px-2 py-1 rounded">
                         Overdue
+                      </span>
+                    ) : (
+                      <span className="text-xs bg-yellow-500 text-white px-2 py-1 rounded">
+                        Due Soon
                       </span>
                     )}
                   </div>
