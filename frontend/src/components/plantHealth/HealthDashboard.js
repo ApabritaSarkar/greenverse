@@ -55,7 +55,10 @@ const HealthDashboard = () => {
     );
   }
 
-  const getUrgencyColor = (urgency) => {
+  const getUrgencyColor = (urgency, overdue) => {
+    if (overdue) {
+      return "bg-red-100 text-red-700 border-red-200";
+    }
     switch (urgency) {
       case "high":
         return "bg-red-100 text-red-700 border-red-200";
@@ -152,7 +155,8 @@ const HealthDashboard = () => {
               <div
                 key={index}
                 className={`p-4 rounded-lg border-2 ${getUrgencyColor(
-                  reminder.urgency
+                  reminder.urgency,
+                  reminder.overdue
                 )}`}
               >
                 <div className="flex items-center justify-between">
