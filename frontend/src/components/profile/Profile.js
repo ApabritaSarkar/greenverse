@@ -96,16 +96,9 @@ const Profile = ({ setIsLoggedIn }) => {
     };
 
     try {
-      const data = await addPlant(newPlant);
-      setUser((prev) => ({
-        ...prev,
-        plants: [
-          ...(prev.plants || []),
-          { ...data, _id: data._id || `temp_${Date.now()}` },
-        ],
-        plantsOwned: (prev.plantsOwned || 0) + 1,
-      }));
-
+      await addPlant(newPlant); // just add
+      const refreshedProfile = await fetchUserProfile(); // fetch updated profile with correct formats
+      setUser(refreshedProfile);
       // Reset form fields
       setPlantName("");
       setDatePlanted("");
@@ -120,6 +113,7 @@ const Profile = ({ setIsLoggedIn }) => {
       setPruningLastDone("");
 
       setMessage("Plant added successfully!");
+      setActiveTab("plants");
     } catch (err) {
       setError("Failed to add plant: " + err.message);
     } finally {
