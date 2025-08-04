@@ -1,5 +1,5 @@
 import React from 'react';
-import { User, Mail, Calendar, Sprout } from 'lucide-react';
+import { User, Mail, Sprout } from 'lucide-react';
 
 const UserInfo = ({ user }) => {
   return (
@@ -27,11 +27,6 @@ const UserInfo = ({ user }) => {
             <Mail size={20} className="text-eco-green" />
             <span className="font-semibold text-eco-green">Email:</span> 
             <span className="text-gray-700">{user.email}</span>
-          </p>
-          <p className="text-lg flex items-center space-x-2">
-            <Calendar size={20} className="text-eco-green" />
-            <span className="font-semibold text-eco-green">Member Since:</span> 
-            <span className="text-gray-700">{user.memberSince}</span>
           </p>
           <p className="text-lg flex items-center space-x-2">
             <Sprout size={20} className="text-eco-green" />
