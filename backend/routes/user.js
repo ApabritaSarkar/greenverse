@@ -149,33 +149,92 @@ router.get("/profile", verifyToken, async (req, res) => {
   }
 });
 
-// Add plant route
 router.post("/add-plant", verifyToken, async (req, res) => {
   try {
-    const { name, datePlanted, status } = req.body;
-
-    const user = await User.findById(req.userId);
-    if (!user) return res.status(404).json({ message: "User not found" });
-
-    const newPlant = new OwnedPlant({
+    const {
       name,
       datePlanted,
       status,
+      species,
+      location,
+      wateringFrequency,
+      wateringLastDone,
+      fertilizingFrequency,
+      fertilizingLastDone,
+      pruningFrequency,
+      pruningLastDone
+    } = req.body;
+
+    // Validate required fields
+    if (!name || !datePlanted || !status) {
+      return res.status(400).json({ 
+        message: "Name, date planted, and status are required" 
+      });
+    }
+
+    const user = await User.findById(req.userId);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Parse dates safely
+    const parsedDatePlanted = new Date(datePlanted);
+    if (isNaN(parsedDatePlanted.getTime())) {
+      return res.status(400).json({ message: "Invalid date planted" });
+    }
+
+    const now = new Date();
+    
+    // Parse optional last done dates
+    const parseOptionalDate = (dateStr) => {
+      if (!dateStr) return now;
+      const parsed = new Date(dateStr);
+      return isNaN(parsed.getTime()) ? now : parsed;
+    };
+
+    const newPlant = new OwnedPlant({
+      name,
+      datePlanted: parsedDatePlanted,
+      status,
+      species: species || undefined,
+      location: location || undefined,
       owner: user._id,
+      careSchedule: {
+        watering: {
+          frequency: parseInt(wateringFrequency) || 7,
+          lastDone: parseOptionalDate(wateringLastDone)
+        },
+        fertilizing: {
+          frequency: parseInt(fertilizingFrequency) || 30,
+          lastDone: parseOptionalDate(fertilizingLastDone)
+        },
+        pruning: {
+          frequency: parseInt(pruningFrequency) || 90,
+          lastDone: parseOptionalDate(pruningLastDone)
+        }
+      }
     });
 
-    await newPlant.save();
+    await newPlant.save(); // `.pre('save')` will auto-calculate nextDue
 
+    // Add to user's plants array
+    user.plants = user.plants || [];
     user.plants.push(newPlant._id);
     await user.save();
 
-    res
-      .status(201)
-      .json({ message: "Plant added successfully", plant: newPlant });
+    res.status(201).json({
+      message: "Plant added successfully",
+      plant: newPlant
+    });
+
   } catch (err) {
     console.error("Add plant error:", err);
-    res.status(500).json({ message: "Server error", error: err.message });
+    res.status(500).json({ 
+      message: "Server error", 
+      error: process.env.NODE_ENV === 'development' ? err.message : 'Internal server error'
+    });
   }
 });
+
 
 module.exports = router;

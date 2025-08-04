@@ -72,72 +72,84 @@ router.get("/care-reminders", verifyToken, async (req, res) => {
     const threeDaysFromNow = new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000);
 
     plants.forEach((plant) => {
+      // Ensure careSchedule exists
+      if (!plant.careSchedule) return;
+
       // Check watering
-      if (plant.careSchedule.watering.nextDue) {
-        if (plant.careSchedule.watering.nextDue <= now) {
-          reminders.push({
-            plantId: plant._id,
-            plantName: plant.name,
-            action: "watering",
-            dueDate: plant.careSchedule.watering.nextDue,
-            overdue: true,
-            urgency: "high",
-          });
-        } else if (plant.careSchedule.watering.nextDue <= threeDaysFromNow) {
-          reminders.push({
-            plantId: plant._id,
-            plantName: plant.name,
-            action: "watering",
-            dueDate: plant.careSchedule.watering.nextDue,
-            overdue: false,
-            urgency: "medium",
-          });
+      if (plant.careSchedule.watering && plant.careSchedule.watering.nextDue) {
+        const nextDue = new Date(plant.careSchedule.watering.nextDue);
+        if (!isNaN(nextDue.getTime())) {
+          if (nextDue <= now) {
+            reminders.push({
+              plantId: plant._id,
+              plantName: plant.name,
+              action: "watering",
+              dueDate: nextDue,
+              overdue: true,
+              urgency: "high",
+            });
+          } else if (nextDue <= threeDaysFromNow) {
+            reminders.push({
+              plantId: plant._id,
+              plantName: plant.name,
+              action: "watering",
+              dueDate: nextDue,
+              overdue: false,
+              urgency: "medium",
+            });
+          }
         }
       }
 
       // Check fertilizing
-      if (plant.careSchedule.fertilizing.nextDue) {
-        if (plant.careSchedule.fertilizing.nextDue <= now) {
-          reminders.push({
-            plantId: plant._id,
-            plantName: plant.name,
-            action: "fertilizing",
-            dueDate: plant.careSchedule.fertilizing.nextDue,
-            overdue: true,
-            urgency: "medium",
-          });
-        } else if (plant.careSchedule.fertilizing.nextDue <= threeDaysFromNow) {
-          reminders.push({
-            plantId: plant._id,
-            plantName: plant.name,
-            action: "fertilizing",
-            dueDate: plant.careSchedule.fertilizing.nextDue,
-            overdue: false,
-            urgency: "low",
-          });
+      if (plant.careSchedule.fertilizing && plant.careSchedule.fertilizing.nextDue) {
+        const nextDue = new Date(plant.careSchedule.fertilizing.nextDue);
+        if (!isNaN(nextDue.getTime())) {
+          if (nextDue <= now) {
+            reminders.push({
+              plantId: plant._id,
+              plantName: plant.name,
+              action: "fertilizing",
+              dueDate: nextDue,
+              overdue: true,
+              urgency: "medium",
+            });
+          } else if (nextDue <= threeDaysFromNow) {
+            reminders.push({
+              plantId: plant._id,
+              plantName: plant.name,
+              action: "fertilizing",
+              dueDate: nextDue,
+              overdue: false,
+              urgency: "low",
+            });
+          }
         }
       }
 
       // Check pruning
-      if (plant.careSchedule.pruning.nextDue) {
-        if (plant.careSchedule.pruning.nextDue <= now) {
-          reminders.push({
-            plantId: plant._id,
-            plantName: plant.name,
-            action: "pruning",
-            dueDate: plant.careSchedule.pruning.nextDue,
-            overdue: true,
-            urgency: "low",
-          });
-        } else if (plant.careSchedule.pruning.nextDue <= threeDaysFromNow) {
-          reminders.push({
-            plantId: plant._id,
-            plantName: plant.name,
-            action: "pruning",
-            dueDate: plant.careSchedule.pruning.nextDue,
-            overdue: false,
-            urgency: "low",
-          });
+      if (plant.careSchedule.pruning && plant.careSchedule.pruning.nextDue) {
+        const nextDue = new Date(plant.careSchedule.pruning.nextDue);
+        if (!isNaN(nextDue.getTime())) {
+          if (nextDue <= now) {
+            reminders.push({
+              plantId: plant._id,
+              plantName: plant.name,
+              action: "pruning",
+              dueDate: nextDue,
+              overdue: true,
+              urgency: "low",
+            });
+          } else if (nextDue <= threeDaysFromNow) {
+            reminders.push({
+              plantId: plant._id,
+              plantName: plant.name,
+              action: "pruning",
+              dueDate: nextDue,
+              overdue: false,
+              urgency: "low",
+            });
+          }
         }
       }
     });
@@ -149,25 +161,37 @@ router.get("/care-reminders", verifyToken, async (req, res) => {
         return urgencyOrder[b.urgency] - urgencyOrder[a.urgency];
       }
 
-      // Fix: avoid crash if dueDate is missing
-      if (!a.dueDate) return 1;
-      if (!b.dueDate) return -1;
-
-      return new Date(a.dueDate) - new Date(b.dueDate);
+      // Safe date comparison
+      const aDate = a.dueDate ? new Date(a.dueDate) : new Date(0);
+      const bDate = b.dueDate ? new Date(b.dueDate) : new Date(0);
+      
+      return aDate - bDate;
     });
 
     res.json(reminders);
   } catch (error) {
-    res
-      .status(500)
-      .json({ message: "Error fetching care reminders", error: error.message });
+    console.error("Care reminders error:", error);
+    res.status(500).json({ 
+      message: "Error fetching care reminders", 
+      error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
+    });
   }
 });
 
-// Log care action
+// Fixed care logging route
 router.post("/:plantId/care-log", verifyToken, async (req, res) => {
   try {
     const { action, notes } = req.body;
+    
+    // Validate action
+    const validActions = ['watered', 'fertilized', 'pruned', 'repotted', 'rotated', 'other'];
+    if (!action || !validActions.includes(action)) {
+      return res.status(400).json({ 
+        message: "Valid action is required", 
+        validActions 
+      });
+    }
+
     const plant = await OwnedPlant.findOne({
       _id: req.params.plantId,
       owner: req.userId,
@@ -180,30 +204,49 @@ router.post("/:plantId/care-log", verifyToken, async (req, res) => {
     // Add care log entry
     plant.careLog.push({
       action,
-      notes,
+      notes: notes || '',
       date: new Date(),
     });
 
     // Update care schedule based on action
     const now = new Date();
+    
+    // Ensure careSchedule structure exists
+    if (!plant.careSchedule) {
+      plant.careSchedule = {};
+    }
+
     if (action === "watered") {
+      if (!plant.careSchedule.watering) {
+        plant.careSchedule.watering = { frequency: 7 };
+      }
       plant.careSchedule.watering.lastDone = now;
     } else if (action === "fertilized") {
+      if (!plant.careSchedule.fertilizing) {
+        plant.careSchedule.fertilizing = { frequency: 30 };
+      }
       plant.careSchedule.fertilizing.lastDone = now;
     } else if (action === "pruned") {
+      if (!plant.careSchedule.pruning) {
+        plant.careSchedule.pruning = { frequency: 90 };
+      }
       plant.careSchedule.pruning.lastDone = now;
     }
+
     plant.markModified("careSchedule");
-    await plant.save();
+    await plant.save(); // This will trigger the pre-save hook to recalculate nextDue dates
 
     res.json({
       message: "Care action logged successfully",
       careLog: plant.careLog[plant.careLog.length - 1],
+      updatedCareSchedule: plant.careSchedule
     });
   } catch (error) {
-    res
-      .status(500)
-      .json({ message: "Error logging care action", error: error.message });
+    console.error("Care logging error:", error);
+    res.status(500).json({ 
+      message: "Error logging care action", 
+      error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
+    });
   }
 });
 
